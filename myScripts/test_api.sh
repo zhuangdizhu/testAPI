@@ -121,21 +121,21 @@ run_scheduler() {
 	
     #Local mode, ONLY jobs from FPGA-equipped nodes will be issued.
 	if [[ $pattern = "Local" ]]; then
-		cmd='pdsh -w $fpga_nodes "cd $path; cd myScripts/; ./fpga_node.sh &"'
+		cmd="pdsh -w $fpga_nodes \"cd $path; cd myScripts/; ./fpga_node.sh > ../logInfo/fpganode-${pattern}.log &\""
 		echo "$cmd"; eval "$cmd"
 
 	#Remote Mode, ONLY jobs from non-FPGA-equipped node will be issued
 	elif [[ $pattern = "Remote" ]]; then
-		cmd="pdsh -w $fpga_nodes \"cd $path; ./deamon.py $deamon_port $scheduler_node $scheduler_port &\""
+		cmd="pdsh -w $fpga_nodes \"cd $path; ./deamon.py $deamon_port $scheduler_node $scheduler_port > ../logInfo/fpganode-${pattern}.log &\""
 		echo "$cmd"; eval "$cmd"
-		cmd="pdsh -w $other_nodes \"cd $path; cd myScripts; ./non_fpga_node.sh &\""
+		cmd="pdsh -w $other_nodes \"cd $path; cd myScripts; ./non_fpga_node.sh > ../logInfo/othernode-${pattern}.log &\""
 		echo "$cmd"; eval "$cmd"
 		
     #Global mode. BOTH jobs from FPGA-equipped and non-FPGA-equipped nodes will be issued.
 	elif [[ $pattern = "Global" ]]; then
-		cmd="pdsh -w $fpga_nodes \"cd $path; cd myScripts/; ./fpga_node.sh &\""
+		cmd="pdsh -w $fpga_nodes \"cd $path; cd myScripts/; ./fpga_node.sh > ../logInfo/fpganode-${pattern}.log &\""
 		echo "$cmd"; eval "$cmd"
-		cmd="pdsh -w $other_nodes \"cd $path; cd myScripts/; ./non_fpga_node.sh &\""
+		cmd="pdsh -w $other_nodes \"cd $path; cd myScripts/; ./non_fpga_node.sh > ../logInfo/othernode-${pattern}.log &\""
 		echo "$cmd"; eval "$cmd"
 	fi
 }

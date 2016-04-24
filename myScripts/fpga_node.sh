@@ -28,6 +28,6 @@ exe "$cmd"
 
 cmd="../deamon.py $deamon_port $scheduler_node $scheduler_port > ../logInfo/deamon-${datetime}.log &"
 exe "$cmd"
-cmd="./execute_job.sh $node > ../logInfo/joblog-$node-mean-${mean}.log &" 
+cmd="./execute_job.sh $node > ../logInfo/joblog-$node-mean-${mean}-${datetime}.log &" 
 exe "$cmd"
 exit 0

@@ -11,8 +11,10 @@ processLine(){
   	arg2=$(echo $line | awk '{ print $2 }')
   	arg3=$(echo $line | awk '{ print $3 }')
 	sleep $arg3
-    cmd="../test_bench.sh $arg1 $arg2 $scheduler_node $scheduler_port"
-	echo $cmd; eval $cmd
+    #cmd="../test_bench.sh $arg1 $arg2 $scheduler_node $scheduler_port"
+	#echo $cmd; eval $cmd
+    #echo $line
+    ../test_bench.sh $arg1 $arg2 $scheduler_node $scheduler_port
 }
 
 node=$1
@@ -32,7 +34,12 @@ exec 3<&0
 exec 0<"$FILE"
 while read -r line
 do
-	processLine $line 
+	#processLine $line 
+  	arg1=$(echo $line | awk '{ print $1 }')
+  	arg2=$(echo $line | awk '{ print $2 }')
+  	arg3=$(echo $line | awk '{ print $3 }')
+    ../test_bench.sh $arg1 $arg2 $scheduler_node $scheduler_port &
+	sleep $arg3
 done
 exec 0<&3
 IFS=$BAKIFS

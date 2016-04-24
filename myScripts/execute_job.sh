@@ -1,21 +1,8 @@
 #!/bin/bash
-
 . ./fpga.cfg
 
 scheduler_node=$SCHEDULER_NODE
 scheduler_port=$SCHEDULER_PORT
-
-processLine(){
-	line="$@" # get all args
-  	arg1=$(echo $line | awk '{ print $1 }')
-  	arg2=$(echo $line | awk '{ print $2 }')
-  	arg3=$(echo $line | awk '{ print $3 }')
-	sleep $arg3
-    #cmd="../test_bench.sh $arg1 $arg2 $scheduler_node $scheduler_port"
-	#echo $cmd; eval $cmd
-    #echo $line
-    ../test_bench.sh $arg1 $arg2 $scheduler_node $scheduler_port
-}
 
 node=$1
 
@@ -32,6 +19,7 @@ BAKIFS=$IFS
 IFS=$(echo -en "\n\b")
 exec 3<&0
 exec 0<"$FILE"
+
 while read -r line
 do
 	#processLine $line 
@@ -40,8 +28,6 @@ do
   	arg3=$(echo $line | awk '{ print $3 }')
     ../test_bench.sh $arg1 $arg2 $scheduler_node $scheduler_port &
 	sleep $arg3
-done
-exit 0
+done 
 exec 0<&3
 IFS=$BAKIFS
-exit 0

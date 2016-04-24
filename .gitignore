@@ -1,0 +1,11 @@
+delete
+*.log
+*.pyc
+*.so
+*.o
+## directory
+fpga-sim
+jobInfo
+logInfo
+scripts
+

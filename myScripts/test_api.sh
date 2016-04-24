@@ -15,8 +15,8 @@
 
 # show usage info
 
-#path="/home/tian/zdzhu/testAPI/"
-path="/Users/zhuzhuangdi/Documents/mytests/testAPI/"
+path="/home/tian/zdzhu/testAPI/"
+#path="/Users/zhuzhuangdi/Documents/mytests/testAPI/"
 
 usage() {
 	echo "Usage: test_fpga.sh [start|status|stop]"
@@ -80,7 +80,7 @@ test_start() {
 
 # check scheduler and server status
 test_status() {
-	ps aux | grep "fpga_scheduler"
+	ps aux | egrep [f]pga_scheduler
 	pdsh -w $fpga_nodes 'ps aux | egrep "[d]eamon"'
 	pdsh -w $allnodes 'ps aux | egrep "[e]xecute_job"'
 }
@@ -112,10 +112,10 @@ run_scheduler() {
 	echo "  scheduler is using FIFO algorithm, mean = ${mean}, pattern = ${pattern}"
 	datetime=`date +"%Y%m%d-%H%M"`
     if [[ $pattern = "Local" ]]; then
-	    cmd="../fpga_scheduler.py $scheduler_port Local ../fpga_node.txt>> ../logInfo/$pattern-mean$mean-${algorithm}-$datetime.log &"
+	    cmd="../fpga_scheduler.py $scheduler_port Local ../fpga_node.txt >> ../logInfo/$pattern-mean$mean-${algorithm}-$datetime.log &"
 	    exe "$cmd"
     else
-	    cmd="../fpga_scheduler.py $scheduler_port TCP ../fpga_node.txt>> ../logInfo/$pattern-mean$mean-${algorithm}-$datetime.log &"
+	    cmd="../fpga_scheduler.py $scheduler_port TCP ../fpga_node.txt >> ../logInfo/$pattern-mean$mean-${algorithm}-$datetime.log &"
 	    exe "$cmd"
     fi
 	
@@ -126,7 +126,7 @@ run_scheduler() {
 
 	#Remote Mode, ONLY jobs from non-FPGA-equipped node will be issued
 	elif [[ $pattern = "Remote" ]]; then
-		cmd="pdsh -w $fpga_nodes \"cd $path; ./deamon.py 5000 &\""
+		cmd="pdsh -w $fpga_nodes \"cd $path; ./deamon.py 5000 $scheduler_node $scheduler_port &\""
 		echo "$cmd"; eval "$cmd"
 		cmd="pdsh -w $other_nodes \"cd $path; cd myScripts; ./non_fpga_node.sh &\""
 		echo "$cmd"; eval "$cmd"

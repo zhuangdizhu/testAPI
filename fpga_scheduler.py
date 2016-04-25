@@ -207,7 +207,16 @@ class FpgaScheduler(object):
         self.initiate_section_status()
         print "[1] Information loaded. Begin running simulator ..."
 
-    def execute_scheduling(self, job_id, event_type):
+    def execute_scheduling(self, job_id, job_node_ip, event_type):
+        if event_type == "JOB_ARRIVAL":
+            if job_node_ip not in self.node_list:
+                node_id = len(self.node_list)
+                server_port = 0
+                rdma_host = 0
+                if_fpga_available = False
+                section_num = 0
+                self.node_list[job_node_ip] = PowerNode(node_id, job_node_ip, server_port, rdma_host, if_fpga_available, section_num)
+
         if self.mode == "Local":
             self.conduct_local_scheduling(job_id, event_type)
         else:
@@ -480,7 +489,7 @@ class FpgaScheduler(object):
                                                 job_arrival_time)
         self.job_list[current_job_id].job_execution_time = job_execution_time
 
-        self.execute_scheduling(current_job_id, "JOB_ARRIVAL")
+        self.execute_scheduling(current_job_id, job_node_ip, "JOB_ARRIVAL")
         if self.job_list[current_job_id].job_if_triggered == 0:
             self.add_job_to_wait_queue(current_job_id)
 
@@ -502,6 +511,7 @@ class FpgaScheduler(object):
             status.append(i.strip('\x00'))
         # data contains: status, job_id, open_time, execution_time, close_time, total_time
         job_id = int(data[1])
+        job_node_ip = self.job_list[job_id].job_node_ip
         #job_open_time = float(data[2])
         #job_execution_time = float(data[3])
         #job_close_time = float(data[4])
@@ -510,7 +520,7 @@ class FpgaScheduler(object):
         #job_complete_time = job_arrival_time + job_total_time
         self.update_section_info(job_id)
         #self.update_job_info(job_id, job_open_time, job_execution_time, job_total_time, job_complete_time)
-        self.execute_scheduling(job_id, "JOB_COMPLETE")
+        self.execute_scheduling(job_id, job_node_ip, "JOB_COMPLETE")
         print "[job %r] COMPLETES" % job_id
 
     def update_section_info(self, job_id):

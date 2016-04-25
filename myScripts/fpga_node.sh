@@ -22,8 +22,8 @@ exe() {
 
 cmd="./set_job.py $job_num $mean $node"
 exe "$cmd"
-#cmd="../deamon.py $deamon_port &"
-#exe "$cmd"
+cmd="../deamon.py $deamon_port &"
+exe "$cmd"
 cmd="./execute_job.sh $node &" 
 exe "$cmd"
 exit 0

@@ -34,10 +34,10 @@ int main(int argc, char **argv)
 	count = atof(argv[2]);
     host = argv[3];
     port = atoi(argv[4]);
-	in_buf_size = int(count * sysconf(_SC_PAGESIZE)+0.5);
+	in_buf_size = (int)(count * sysconf(_SC_PAGESIZE)+0.5);
     out_buf_size = in_buf_size;
 	
-	printf("job_size = %d K bytes, result_size=%d K bytes.\n", int(0.5+count*4), int(count*4+0.5));
+	printf("job_size = %d K bytes, result_size=%d K bytes.\n",(int)(0.5+count*4), (int)(count*4+0.5));
 
 	//printf("Request to open FPGA device:\n");
 	gettimeofday(&t1, NULL);

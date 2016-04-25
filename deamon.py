@@ -72,7 +72,7 @@ def run_deamon(daemon_port, s_host, s_port):
         server.server_close()
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
+    if len(sys.argv) < 4:
         print "Usage: ", sys.argv[0], "<daemon port> <scheduler_host>, <scheduler_port>"
         print "Example: ./deamon.py 5000 tian01 9000"
     else:

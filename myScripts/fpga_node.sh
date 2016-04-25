@@ -25,6 +25,8 @@ exe() {
 
 cmd="./set_job.py $job_num $mean $node"
 exe "$cmd"
+echo "$deamon_port $scheduler_node $scheduler_port"
+#cmd="../deamon.py $deamon_port $scheduler_node $scheduler_port &"
 cmd="../deamon.py $deamon_port $scheduler_node $scheduler_port > ../logInfo/deamon-${datetime}.log &"
 exe "$cmd"
 cmd="./execute_job.sh $node > ../logInfo/joblog-$node-mean-${mean}-${datetime}.log &" 

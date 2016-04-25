@@ -111,13 +111,13 @@ run_scheduler() {
 	
 	echo "  scheduler is using FIFO algorithm, mean = ${mean}, pattern = ${pattern}"
 	datetime=`date +"%Y%m%d-%H%M"`
-    if [[ $pattern = "Local" ]]; then
-	    cmd="../fpga_scheduler.py $scheduler_port Local ../fpga_node.txt > ../logInfo/$pattern-mean$mean-${algorithm}-${datetime}.log &"
-	    exe "$cmd"
-    else
-	    cmd="../fpga_scheduler.py $scheduler_port TCP ../fpga_node.txt > ../logInfo/$pattern-mean$mean-${algorithm}-${datetime}.log &"
-	    exe "$cmd"
-    fi
+    #if [[ $pattern = "Local" ]]; then
+	#    cmd="../fpga_scheduler.py $scheduler_port Local ../fpga_node.txt > ../logInfo/$pattern-mean$mean-${algorithm}-${datetime}.log &"
+	#    exe "$cmd"
+    #else
+	#    cmd="../fpga_scheduler.py $scheduler_port TCP ../fpga_node.txt > ../logInfo/$pattern-mean$mean-${algorithm}-${datetime}.log &"
+	#    exe "$cmd"
+    #fi
 	
     #Local mode, ONLY jobs from FPGA-equipped nodes will be issued.
 	if [[ $pattern = "Local" ]]; then

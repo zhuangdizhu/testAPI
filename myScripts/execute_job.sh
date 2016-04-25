@@ -26,7 +26,8 @@ do
   	arg1=$(echo $line | awk '{ print $1 }')
   	arg2=$(echo $line | awk '{ print $2 }')
   	arg3=$(echo $line | awk '{ print $3 }')
-    ../test_bench.sh $arg1 $arg2 $scheduler_node $scheduler_port &
+    #../test_bench.sh $arg1 $arg2 $scheduler_node $scheduler_port &
+    ../fpga-benchmark $arg1 $arg2 $scheduler_node $scheduler_port &
 	sleep $arg3
 done 
 exec 0<&3

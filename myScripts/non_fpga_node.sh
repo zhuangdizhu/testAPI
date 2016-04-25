@@ -3,6 +3,7 @@
 job_num=$JOB_NUM
 mean=$MEAN
 node=`hostname`
+datetime=`date`
 
 # print and execute command string
 # comment out eval while debugging
@@ -18,5 +19,6 @@ exe() {
 
 cmd="./set_job.py $job_num $mean $node" 
 exe "$cmd"
-cmd="./execute_job.sh $node &" 
+cmd="./execute_job.sh $node > ../logInfo/joblog-$node-mean-${mean}-${datetime}.log &" 
 exe "$cmd"
+exit 0

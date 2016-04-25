@@ -61,7 +61,7 @@ read_conf() {
         scheduler_node=$SCHEDULE_PORT
 	fi
 	if [ -z "$DEAMON_PORT" ]; then
-        deamon_port="9000"
+        deamon_port="5000"
 	else 
         deamon_node=$DEAMON_PORT
 	fi
@@ -111,31 +111,31 @@ run_scheduler() {
 	
 	echo "  scheduler is using FIFO algorithm, mean = ${mean}, pattern = ${pattern}"
 	datetime=`date +"%Y%m%d-%H%M"`
-    if [[ $pattern = "Local" ]]; then
-	    cmd="../fpga_scheduler.py $scheduler_port Local ../fpga_node.txt >> ../logInfo/$pattern-mean$mean-${algorithm}-$datetime.log &"
-	    exe "$cmd"
-    else
-	    cmd="../fpga_scheduler.py $scheduler_port TCP ../fpga_node.txt >> ../logInfo/$pattern-mean$mean-${algorithm}-$datetime.log &"
-	    exe "$cmd"
-    fi
+    #if [[ $pattern = "Local" ]]; then
+	#    cmd="../fpga_scheduler.py $scheduler_port Local ../fpga_node.txt > ../logInfo/$pattern-mean$mean-${algorithm}-${datetime}.log &"
+	#    exe "$cmd"
+    #else
+	#    cmd="../fpga_scheduler.py $scheduler_port TCP ../fpga_node.txt > ../logInfo/$pattern-mean$mean-${algorithm}-${datetime}.log &"
+	#    exe "$cmd"
+    #fi
 	
     #Local mode, ONLY jobs from FPGA-equipped nodes will be issued.
 	if [[ $pattern = "Local" ]]; then
-		cmd='pdsh -w $fpga_nodes "cd $path; cd myScripts/; ./fpga_node.sh &"'
+		cmd="pdsh -w $fpga_nodes \"cd $path; cd myScripts/; ./fpga_node.sh > ../logInfo/fpganode-${pattern}.log &\""
 		echo "$cmd"; eval "$cmd"
 
 	#Remote Mode, ONLY jobs from non-FPGA-equipped node will be issued
 	elif [[ $pattern = "Remote" ]]; then
-		cmd="pdsh -w $fpga_nodes \"cd $path; ./deamon.py 5000 $scheduler_node $scheduler_port &\""
+		cmd="pdsh -w $fpga_nodes \"cd $path; ./deamon.py $deamon_port $scheduler_node $scheduler_port > ../logInfo/fpganode-${pattern}.log &\""
 		echo "$cmd"; eval "$cmd"
-		cmd="pdsh -w $other_nodes \"cd $path; cd myScripts; ./non_fpga_node.sh &\""
+		cmd="pdsh -w $other_nodes \"cd $path; cd myScripts; ./non_fpga_node.sh > ../logInfo/othernode-${pattern}.log &\""
 		echo "$cmd"; eval "$cmd"
 		
     #Global mode. BOTH jobs from FPGA-equipped and non-FPGA-equipped nodes will be issued.
 	elif [[ $pattern = "Global" ]]; then
-		cmd="pdsh -w $fpga_nodes \"cd $path; cd myScripts/; ./fpga_node.sh &\""
+		cmd="pdsh -w $fpga_nodes \"cd $path; cd myScripts/; ./fpga_node.sh > ../logInfo/fpganode-${pattern}.log &\""
 		echo "$cmd"; eval "$cmd"
-		cmd="pdsh -w $other_nodes \"cd $path; cd myScripts/; ./non_fpga_node.sh &\""
+		cmd="pdsh -w $other_nodes \"cd $path; cd myScripts/; ./non_fpga_node.sh > ../logInfo/othernode-${pattern}.log &\""
 		echo "$cmd"; eval "$cmd"
 	fi
 }

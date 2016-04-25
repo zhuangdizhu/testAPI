@@ -7,6 +7,9 @@ job_num=$JOB_NUM
 mean=$MEAN
 deamon_port=$DEAMON_PORT
 node=`hostname`
+scheduler_node=$SCHEDULER_NODE
+scheduler_port=$SCHEDULER_PORT
+datetime=`date`
 
 # print and execute command string
 # comment out eval while debugging
@@ -22,8 +25,8 @@ exe() {
 
 cmd="./set_job.py $job_num $mean $node"
 exe "$cmd"
-cmd="../deamon.py $deamon_port &"
+cmd="../deamon.py $deamon_port $scheduler_node $scheduler_port > ../logInfo/deamon-${datetime}.log &"
 exe "$cmd"
-cmd="./execute_job.sh $node &" 
+cmd="./execute_job.sh $node > ../logInfo/joblog-$node-mean-${mean}-${datetime}.log &" 
 exe "$cmd"
 exit 0

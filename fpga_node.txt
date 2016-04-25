@@ -1,2 +1,0 @@
-tcp_host 		tcp_port		rdma_host	        if_fpga_available 
-192.168.8.2     5000            0.0.0.0                 1

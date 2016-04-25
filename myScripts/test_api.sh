@@ -50,28 +50,29 @@ read_conf() {
 	else 
 		other_nodes=$OTHER_NODES
 	fi
-	if [ -z "$SCHEDULE_NODE" ]; then
+	if [ -z "$SCHEDULER_NODE" ]; then
         scheduler_node="tian01"
 	else 
-        scheduler_node=$SCHEDULE_NODE
+        scheduler_node=$SCHEDULER_NODE
 	fi
-	if [ -z "$SCHEDULE_PORT" ]; then
+	if [ -z "$SCHEDULER_PORT" ]; then
         scheduler_port="9000"
 	else 
-        scheduler_node=$SCHEDULE_PORT
+        scheduler_port=$SCHEDULER_PORT
 	fi
 	if [ -z "$DEAMON_PORT" ]; then
         deamon_port="5000"
 	else 
-        deamon_node=$DEAMON_PORT
+        deamon_port=$DEAMON_PORT
 	fi
 
-	echo "  Config: $pattern, $mean, $job_num"
-    echo "  Config: $fpga_nodes, $other_nodes"
-    echo "  Config: $scheduler_node, $scheduler_port, $deamon_port"
+	echo "  Config: pattern $pattern, mean $mean, job_num $job_num"
+    echo "  Config: fpga_nodes $fpga_nodes, other_nodes $other_nodes"
+    echo "  Config: scheduler_node $scheduler_node, scheduler_port $scheduler_port"
+    echo "  Config: deamon_port $deamon_port"
 }
 
-# start scheduler on SCHEDULE_NODE, 
+# start scheduler on SCHEDULER_NODE, 
 # start server and tests based on PATTERN
 test_start() {
 	# run scheduler on current node 
@@ -85,7 +86,7 @@ test_status() {
 	pdsh -w $allnodes 'ps aux | egrep "[e]xecute_job"'
 }
 
-# kill scheduler on SCHEDULE_NODE, 
+# kill scheduler on SCHEDULER_NODE, 
 # kill server and tests based on all nodes 
 test_stop() {
 	pkill -9 -f fpga_scheduler

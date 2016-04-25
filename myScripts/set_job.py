@@ -27,10 +27,10 @@ class JobInitiator(object):
             acc_name = random.sample(self.acc_type_list,1)[0]
             #in_buf_size = mean
             in_buf_size = random.expovariate(self.exp_lambda)   #in MBytes
+
             in_buf_size = int(in_buf_size*256)                       #in 4K Bytes
-
-
             out_buf_size = in_buf_size
+
             arrival_time = 1
             self.target.write("%s " %str(acc_name))
             self.target.write("%s " %str(in_buf_size))

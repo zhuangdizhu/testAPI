@@ -3,7 +3,7 @@
 job_num=$JOB_NUM
 mean=$MEAN
 node=`hostname`
-datetime="$(date +'%Y-%m-%d-%H-%M')"
+datetime="$(date +'%m-%d-%H-%M')"
 
 # print and execute command string
 # comment out eval while debugging

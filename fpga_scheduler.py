@@ -20,7 +20,7 @@ from SocketServer import (BaseRequestHandler as BRH, ThreadingMixIn as TMI, TCPS
 
 print sys.argv
 
-global mutex, debug, BUFFER_SIZE, recv_fmt, send_fmt, scheduler, RDMA_FLAG, TCP_FLAG
+global mutex, debug, BUFFER_SIZE, recv_fmt, send_fmt, scheduler, RDMA_FLAG, TCP_FLAG, PATTERN
 mutex = thread.allocate_lock()
 debug = 0
 BUFFER_SIZE = 1024
@@ -28,7 +28,6 @@ recv_fmt = "!16s16s16s16s16s16s"
 send_fmt = "!16s16s16s16s16s"
 RDMA_FLAG = 0
 TCP_FLAG = 1
-
 
 class TCPServer(TCPServer):
     allow_reuse_address = True
@@ -260,25 +259,41 @@ class FpgaScheduler(object):
                         return
             return
 
-    def pick_idle_node(self, node_lists):
-        mutex.acquire()
-        idle_node = None
-        c_secs = 0
-        for node_ip, node in node_lists.items():
-            if node.if_fpga_available == True:
-                idle_secs = 0
-                for sec_id in node.section_list:
-                    if self.section_list[sec_id].if_idle == True:
-                        idle_secs += 1
-                if idle_secs > c_secs:
-                    idle_node = node_ip
-                    c_secs = idle_secs
-        mutex.release()
-        return idle_node
+    def pick_idle_node(self, node_lists, pattern="strict"):
+        if pattern == "loose":
+            mutex.acquire()
+            idle_node = None
+            ret_nodes = list()
+            for node_ip, node in node_lists.items():
+                if node.if_fpga_available == True:
+                    for sec_id in node.section_list:
+                        if self.section_list[sec_id].if_idle == True:
+                            idle_secs += 1
+                            ret_nodes.append(node_ip)
+                            break
+            if len(ret_nodes) > 0:
+                idle_node =  random.sample(ret_nodes, 1)[0]
+            mutex.release()
+            return idle_node
+        else:
+            mutex.acquire()
+            idle_node = None
+            c_secs = 0
+            for node_ip, node in node_lists.items():
+                if node.if_fpga_available == True:
+                    idle_secs = 0
+                    for sec_id in node.section_list:
+                        if self.section_list[sec_id].if_idle == True:
+                            idle_secs += 1
+                    if idle_secs > c_secs:
+                        idle_node = node_ip
+                        c_secs = idle_secs
+            mutex.release()
+            return idle_node
 
-    def pick_idle_section(self, node_ip):
+    def pick_idle_section(self, node_ip, pattern="loose"):
         mutex.acquire()
-        pcie_bw = 2800
+        t_bw = 2800
         c_bw = 0
         idle_section_list=list()
         for sec_id in self.node_list[node_ip].section_list:
@@ -286,14 +301,20 @@ class FpgaScheduler(object):
                 c_bw += int(self.section_list[sec_id].current_acc_bw)
             else:
                 idle_section_list.append(sec_id)
-
-        #if len(idle_section_list) > 0 and c_bw < pcie_bw:
-        if len(idle_section_list) > 0:
-            mutex.release()
-            return idle_section_list[0]
+        if pattern == "loose":
+            if len(idle_section_list) > 0:
+                mutex.release()
+                return idle_section_list[0]
+            else:
+                mutex.release()
+                return None
         else:
-            mutex.release()
-            return None
+            if len(idle_section_list) > 0 and c_bw < t_bw:
+                mutex.release()
+                return idle_section_list[0]
+            else:
+                mutex.release()
+                return None
 
 
     def conduct_fifo_scheduling(self, job_id, event_type):

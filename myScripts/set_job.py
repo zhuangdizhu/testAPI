@@ -8,7 +8,6 @@
 #
 from __future__ import division
 import sys
-import numpy
 import random
 import os
 

@@ -9,7 +9,7 @@ deamon_port=$DEAMON_PORT
 node=`hostname`
 scheduler_node=$SCHEDULER_NODE
 scheduler_port=$SCHEDULER_PORT
-datetime="$(date +'%Y-%m-%d-%H-%M')"
+datetime="$(date +'%m-%d-%H-%M')"
 
 # print and execute command string
 # comment out eval while debugging

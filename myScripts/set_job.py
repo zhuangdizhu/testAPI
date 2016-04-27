@@ -16,10 +16,10 @@ class JobInitiator(object):
         self.acc_type_list = ['AES','DTW','EC','FFT','SHA']
         self.exp_lambda = 1/mean
         try:
-            os.remove("../jobInfo/job_"+node+".txt")
+            os.remove("../jobInfo/job_"+node+"_"+mean+".txt")
         except OSError:
             pass
-        self.target = open("../jobInfo/job_"+node+".txt",'a')
+        self.target = open("../jobInfo/job_"+node+"_"+mean+".txt",'a')
 
     def generate_job(self, job_num):
         for i in range(job_num):

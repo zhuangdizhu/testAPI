@@ -134,7 +134,9 @@ run_scheduler() {
 		
     #Global mode. BOTH jobs from FPGA-equipped and non-FPGA-equipped nodes will be issued.
 	elif [[ $pattern = "Global" ]]; then
-		cmd="pdsh -w $fpga_nodes \"cd $path; cd myScripts/; ./fpga_node.sh > ../logInfo/fpganode-${pattern}.log &\""
+		cmd="pdsh -w $fpga_nodes \"cd $path; cd myScripts/; ./fpga_node_deamon.sh > ../logInfo/fpgaNodeDeamon-${pattern}.log &\""
+		echo "$cmd"; eval "$cmd"
+		cmd="pdsh -w $fpga_nodes \"cd $path; cd myScripts/; ./fpga_node_job.sh > ../logInfo/fpgaNodeJob-${pattern}.log &\""
 		echo "$cmd"; eval "$cmd"
 		cmd="pdsh -w $other_nodes \"cd $path; cd myScripts/; ./non_fpga_node.sh > ../logInfo/othernode-${pattern}.log &\""
 		echo "$cmd"; eval "$cmd"

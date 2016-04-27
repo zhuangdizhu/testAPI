@@ -112,7 +112,7 @@ run_scheduler() {
 	
 	echo "  scheduler is using FIFO algorithm, mean = ${mean}, pattern = ${pattern}"
 	datetime=`date +"%Y%m%d-%H%M"`
-    #if [[ $pattern = "Local" ]]; then
+    #if [[ $pattern = "local" ]]; then
 	#    cmd="../fpga_scheduler.py $scheduler_port Local ../fpga_node.txt > ../logInfo/$pattern-mean$mean-${algorithm}-${datetime}.log &"
 	#    exe "$cmd"
     #else

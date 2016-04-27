@@ -2,7 +2,7 @@
 # run on fpga node
 #
 . ./fpga.cfg
-
+pattern=$PATTERN
 job_num=$JOB_NUM
 mean=$MEAN
 deamon_port=$DEAMON_PORT
@@ -25,6 +25,6 @@ exe() {
 
 cmd="./set_job.py $job_num $mean $node"
 exe "$cmd"
-cmd="./execute_job.sh $node > ../logInfo/joblog-$node-mean-${mean}-${datetime}.log &" 
+cmd="./execute_job.sh $node > ../logInfo/joblog-$node-${mean}-${pattern}-${datetime}.log &" 
 exe "$cmd"
 exit 0

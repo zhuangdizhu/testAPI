@@ -16,10 +16,10 @@ class JobInitiator(object):
         self.acc_type_list = ['AES','DTW','EC','FFT','SHA']
         self.exp_lambda = 1/mean
         try:
-            os.remove("../jobInfo/job_"+node+"_"+mean+".txt")
+            os.remove("../jobInfo/job_"+node+"_"+str(mean)+".txt")
         except OSError:
             pass
-        self.target = open("../jobInfo/job_"+node+"_"+mean+".txt",'a')
+        self.target = open("../jobInfo/job_"+node+"_"+str(mean)+".txt",'a')
 
     def generate_job(self, job_num):
         for i in range(job_num):
@@ -36,7 +36,7 @@ class JobInitiator(object):
             self.target.write("%s " %str(arrival_time))
             self.target.write("\n")
 
-        print "job paramters created successfully. Please check '../jobInfo/job_%s.txt'" %node
+        print "job paramters created successfully. Please check '../jobInfo/job_%s_%r.txt'" %(node,mean)
 
 
 if __name__ == "__main__":

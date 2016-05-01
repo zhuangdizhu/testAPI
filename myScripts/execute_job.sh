@@ -3,10 +3,11 @@
 
 scheduler_node=$SCHEDULER_NODE
 scheduler_port=$SCHEDULER_PORT
+mean=$MEAN
 
 node=$1
 
-FILE="../jobInfo/job_${node}.txt"
+FILE="../jobInfo/job_${node}_${mean}.txt"
 if [ ! -f $FILE ]; then
 	echo "$FILE: does not exists"
 	exit 1

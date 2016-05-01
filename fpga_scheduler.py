@@ -161,6 +161,7 @@ class FpgaScheduler(object):
         self.priority_queue=defaultdict(list)
         self.E =E
         self.k = k
+        #print "Mode = %r" %self.mode
 
     def initiate_acc_type_list(self):
         acc_names = ["AES", "EC", "DTW", "FFT", "SHA"]
@@ -642,23 +643,12 @@ if __name__ == "__main__":
         print "Example: ./scheduler 9000 RDMA fpga_node.txt"
     else:
         algorithm="FIFO"
-        mode = ""
-
-        if sys.argv[2] == "Local":
-            mode == "Local"
-
-        elif sys.argv[2] == "TCP":
-            mode = "TCP"
-
-        elif sys.argv[2] == "RDMA":
-            mode = "RDMA"
-
-        elif sys.argv[2] == "Hybrid":
-            mode = "Hybrid"
-
-        else:
+        mode = sys.argv[2]
+        print mode
+        if mode not in ["Local", "TCP", "RDMA", "Hybrid"]:
             print "Wrong mode. Mode should be Local, TCP, RDMA or Hybrid"
             exit(0)
+
         input_file = sys.argv[3]
         E = 2
         K = 6

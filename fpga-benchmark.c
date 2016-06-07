@@ -19,7 +19,7 @@ int main(int argc, char **argv)
     unsigned long open_sec, exe_sec, close_sec;
 	char param[16];
 	int port;
-    float count;
+	int count;
 	param[0] = 0x24;
 
 	if (argc != 5) {
@@ -31,13 +31,13 @@ int main(int argc, char **argv)
 	struct acc_context_t my_context;
 
 	acc_name = argv[1];
-	count = atof(argv[2]);
+	count = atoi(argv[2]);
     host = argv[3];
     port = atoi(argv[4]);
-	in_buf_size = (int)(count * sysconf(_SC_PAGESIZE)+0.5);
+	in_buf_size = count * sysconf(_SC_PAGESIZE);
     out_buf_size = in_buf_size;
 	
-	printf("job_size = %d K bytes, result_size=%d K bytes.\n",(int)(0.5+count*4), (int)(count*4+0.5));
+	printf("job_size = %d K bytes, result_size=%d K bytes.\n",count*4, count*4);
 
 	//printf("Request to open FPGA device:\n");
 	gettimeofday(&t1, NULL);

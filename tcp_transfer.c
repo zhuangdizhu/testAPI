@@ -133,17 +133,21 @@ int build_connection_to_tcp_server(void *acc_ctx) {
 
 unsigned int remote_tcp_do_job(void *acc_ctx, const char *param, unsigned int job_len, void ** result_buf) {
     //printf("job_len = %d\n", job_len);
+	struct timeval t1, t2, dt;
+    unsigned long send_sec, recv_sec;
     struct acc_context_t *acc_context = (struct acc_context_t *) acc_ctx;
     struct tcp_client_context_t *tcp_ctx = (struct tcp_client_context_t *)acc_context->tcp_context;
     unsigned int recv_buf_size;
     *result_buf = tcp_ctx->out_buf;
     char *in_buf = (char *)tcp_ctx->in_buf;
     int fd = tcp_ctx->to_server_fd;
+    gettimeofday(&t1, NULL);
     size_t len = send_msg(fd, in_buf, job_len, MTU); 
-    //printf("send to remote server...\n");
     recv_buf_size = recv_msg(fd, *result_buf, job_len, MTU);
-
-    //printf("recv buf size = %u\n", recv_buf_size);
+    gettimeofday(&t2, NULL);
+    timersub(&t2,&t1,&dt);
+    recv_sec = (dt.tv_usec + 1000000* dt.tv_sec)/1000;
+    //printf("Round Time %ld\n",recv_sec );
 
     return recv_buf_size; 
 } 

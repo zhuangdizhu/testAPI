@@ -10,6 +10,7 @@ node=`hostname`
 scheduler_node=$SCHEDULER_NODE
 scheduler_port=$SCHEDULER_PORT
 datetime="$(date +'%m-%d-%H-%M')"
+interval=$INTERVAL
 
 # print and execute command string
 # comment out eval while debugging
@@ -23,7 +24,7 @@ exe() {
 	fi
 }
 
-cmd="./set_job.py $job_num $mean $node"
+cmd="./set_job.py $job_num $mean $node $interval"
 exe "$cmd"
 cmd="./execute_job.sh $node > ../logInfo/joblog-$node-${mean}-${pattern}-${datetime}.log &" 
 exe "$cmd"

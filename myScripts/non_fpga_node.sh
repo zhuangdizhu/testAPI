@@ -4,6 +4,7 @@
 pattern=$PATTERN
 job_num=$JOB_NUM
 mean=$MEAN
+interval=$INTERVAL
 node=`hostname`
 datetime="$(date +'%m-%d-%H-%M')"
 
@@ -19,7 +20,7 @@ exe() {
 	fi
 }
 
-cmd="./set_job.py $job_num $mean $node" 
+cmd="./set_job.py $job_num $mean $node $interval" 
 exe "$cmd"
 cmd="./execute_job.sh $node > ../logInfo/joblog-$node-${mean}-${pattern}-${datetime}.log &" 
 exe "$cmd"

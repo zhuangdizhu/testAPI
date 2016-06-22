@@ -109,6 +109,7 @@ class FpgaJob(object):
     def __init__(self,
                  job_id,
                  job_node_ip,
+                 job_node_name,
                  real_in_buf_size,
                  job_in_buf_size,
                  job_out_buf_size,
@@ -116,6 +117,7 @@ class FpgaJob(object):
                  job_arrival_time):
         self.job_id = 0
         self.job_node_ip = job_node_ip
+        self.job_node_name = job_node_name
         self.real_in_buf_size = real_in_buf_size
         self.job_in_buf_size = job_in_buf_size
         self.job_out_buf_size = job_out_buf_size
@@ -157,15 +159,15 @@ class FpgaScheduler(object):
         self.job_list = dict()
         self.job_waiting_list = dict()  # <job_id: weight> could be arrival time, execution time, etc;
         self.epoch_time = time.time()
-        self.job_arrival_time = time.time()
+        self.job_arrival_time = 0
         self.priority_queue=defaultdict(list)
         self.E =E
         self.k = k
         #print "Mode = %r" %self.mode
 
     def initiate_acc_type_list(self):
-        acc_names = ["AES", "EC", "DTW", "FFT", "SHA"]
-        acc_bws = ["1200", "1200", "1200", "1200", "150"]
+        acc_names = ["AES", "EC", "DTW", "FFT", "SHA", "acc0"]
+        acc_bws = ["1200", "1200", "1200", "1200", "150", "1200"]
         for i, name in enumerate(acc_names):
             self.acc_type_list[name] = acc_bws[i]
 
@@ -197,7 +199,7 @@ class FpgaScheduler(object):
                 for i in range(node.section_num):
                     port_id = str(i)
                     section_id = node_ip + ":section" + port_id
-                    compatible_acc_list = ["AES", "EC", "DTW", "FFT", "SHA"]
+                    compatible_acc_list = ["AES", "EC", "DTW", "FFT", "SHA", "acc0"]
                     self.section_list[section_id] = FpgaSection(section_id, port_id, node_ip, compatible_acc_list)
 
     def initiate_system_status(self, input_file):
@@ -412,7 +414,8 @@ class FpgaScheduler(object):
             return
 
     def trigger_new_job(self, job_id, section_id):
-        print "[job %r] TRIGGERED on [%r]:" %(job_id, section_id)
+        interval = time.time()-self.job_list[job_id].job_arrival_time
+        print "[%r] [START:   %.1f] [JOB%r] on %r" %(self.job_list[job_id].job_node_name, interval, job_id, section_id)
         job_node_ip = self.job_list[job_id].job_node_ip
         job_acc_name = self.job_list[job_id].job_acc_name
         section = self.section_list[section_id]
@@ -501,13 +504,19 @@ class FpgaScheduler(object):
         acc_name = data[4]
         self.current_job_count += 1
         current_job_id = self.current_job_count
-        job_arrival_time = (10 ** 6) * (time.time() - self.epoch_time)
-        interval = job_arrival_time - self.job_arrival_time
-        self.job_arrival_time = job_arrival_time
-        print "[job %r] ARRIVES after %.0f micro-secs, from %r, %r" % (current_job_id, interval, client_addr[0], client_addr[1])
+
+        job_arrival_time = time.time()
+        if current_job_id > 1:
+            interval = job_arrival_time - self.job_arrival_time
+        else:
+            interval = 0
+
+        self.job_arrival_time = time.time()
+        nodeName = "tian0"+client_addr[0][-1]
+        print "[%r] [ARRIVAL: %.1f] [JOB%r]" %(nodeName, interval, current_job_id)
         job_acc_bw = self.acc_type_list[acc_name]
         job_execution_time = (10 ** 6) * float(real_in_buffer_size) / float(job_acc_bw) / (2 ** 20)
-        self.job_list[current_job_id] = FpgaJob(current_job_id, job_node_ip, real_in_buffer_size, in_buffer_size, out_buffer_size, acc_name,
+        self.job_list[current_job_id] = FpgaJob(current_job_id, job_node_ip, nodeName, real_in_buffer_size, in_buffer_size, out_buffer_size, acc_name,
                                                 job_arrival_time)
         self.job_list[current_job_id].job_execution_time = job_execution_time
 
@@ -543,7 +552,9 @@ class FpgaScheduler(object):
         self.update_section_info(job_id)
         #self.update_job_info(job_id, job_open_time, job_execution_time, job_total_time, job_complete_time)
         self.execute_scheduling(job_id, job_node_ip, "JOB_COMPLETE")
-        print "[job %r] COMPLETES" % job_id
+        #print "[job %r] COMPLETES" % job_id
+        interval = time.time()-self.job_list[job_id].job_arrival_time
+        print "END:     [%r] [%.1f] [JOB%r]" %(self.job_list[job_id].job_node_name, interval, job_id)
 
     def update_section_info(self, job_id):
         mutex.acquire()

@@ -12,7 +12,7 @@ import random
 import os
 
 class JobInitiator(object):
-    def __init__(self, mean, node):
+    def __init__(self, mean, node, interval):
         self.acc_type_list = ['AES']
         self.exp_lambda = 1/mean
         try:
@@ -30,7 +30,7 @@ class JobInitiator(object):
             in_buf_size = int(in_buf_size*256)                       #in 4K Bytes
             out_buf_size = in_buf_size
 
-            arrival_time = 5
+            arrival_time = interval
             self.target.write("%s " %str(acc_name))
             self.target.write("%s " %str(in_buf_size))
             self.target.write("%s " %str(arrival_time))
@@ -40,13 +40,14 @@ class JobInitiator(object):
 
 
 if __name__ == "__main__":
-	if len(sys.argv) < 4:
+	if len(sys.argv) < 5:
 		sys.exit("Usage:    "+sys.argv[0]+" <job_num> <job_size_mean/MBytes> <node_name/hostname>")
 		sys.exit("Example:  "+sys.argv[0]+" 10 400 tian01")
 		sys.exit(1)
 	job_num = int(sys.argv[1])
 	mean = int(sys.argv[2])
 	node = sys.argv[3]
-	job_initiator = JobInitiator(mean, node)
+	interval = int(sys.argv[4])
+	job_initiator = JobInitiator(mean, node, interval)
 	job_initiator.generate_job(job_num)
 

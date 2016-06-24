@@ -20,9 +20,9 @@
 static PyObject* start_service(PyObject *self, PyObject *args)
 {
     PyObject * ret;
-    const char *job_id, *status, *section_id, *c_real_in_buf_size, *c_in_buf_size, *c_out_buf_size, *c_acc_name, *scheduler_host, *scheduler_port;
+    const char *job_id, *status, *section_id, *c_real_in_buf_size, *c_in_buf_size, *c_out_buf_size, *c_acc_name, *scheduler_host, *scheduler_port, *max_bps;
 
-    if (!PyArg_ParseTuple(args, "sssssssss", &job_id, &status, &section_id, &c_real_in_buf_size, &c_in_buf_size, &c_out_buf_size, &c_acc_name, &scheduler_host, &scheduler_port)){
+    if (!PyArg_ParseTuple(args, "ssssssssss", &job_id, &status, &section_id, &c_real_in_buf_size, &c_in_buf_size, &c_out_buf_size, &c_acc_name, &scheduler_host, &scheduler_port, &max_bps)){
     	return NULL;
     }
 
@@ -34,6 +34,8 @@ static PyObject* start_service(PyObject *self, PyObject *args)
     server_param.real_in_buf_size = atoi(c_real_in_buf_size);
     server_param.in_buf_size = atoi(c_in_buf_size);
     server_param.out_buf_size = atoi(c_out_buf_size);
+    server_param.max_bps = atof(max_bps);
+
     strcpy(server_param.acc_name, c_acc_name);
     strcpy(server_param.scheduler_host, scheduler_host);
     strcpy(server_param.scheduler_port, scheduler_port);

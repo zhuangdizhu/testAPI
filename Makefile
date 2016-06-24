@@ -5,7 +5,7 @@ APPS    := accServicelayer.so acc_monitor.so fpga-benchmark
 CLIENT_CFLAGS := -I/usr/include
 CLIENT_LIBS := -L/usr/lib/x86_64-linux-gnu
 RDMA_LIBS := -lrdmacm -libverbs -lpthread
-CFLAGS  := -Wall -g -fPIC
+CFLAGS  := -Wall -g -fPIC 
 
 accServicelayer.so: acc_servicelayer.c tcp_transfer.c rdma_client.c fpga-sim/driver/fpga-libacc.c 
 	$(CC) $(CFLAGS) -c -fpic acc_servicelayer.c tcp_transfer.c rdma_client.c fpga-sim/driver/fpga-libacc.c $(CLIENT_CFLAGS) $(CLIENT_LIBS) $(RDMA_LIBS)
@@ -15,7 +15,7 @@ accServicelayer.so: acc_servicelayer.c tcp_transfer.c rdma_client.c fpga-sim/dri
 	sudo cp libaccServicelayer.so /usr/local/lib/
 
 fpga-benchmark: fpga-benchmark.c
-	$(CC) $(CFLAGS) -o fpga-benchmark fpga-benchmark.c -laccServicelayer
+	$(CC) $(CFLAGS) -o fpga-benchmark fpga-benchmark.c -laccServicelayer -lm
 
 acc_monitor.so: acc_monitor.c 
 	python setup.py build 

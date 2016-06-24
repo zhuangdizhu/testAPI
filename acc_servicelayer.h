@@ -29,6 +29,9 @@ struct scheduler_context_t {
 	char section_id[16];/*this indicates which FPGA slot will be used*/
 	char status[16]; /* this indicates the job is local, or remote TCP, or remote RDMA*/
 
+    /*for throttle socket*/
+    double max_bps;
+
     /* for debug only */
     long open_time;
     long execution_time;

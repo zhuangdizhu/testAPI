@@ -14,6 +14,7 @@
 #include <arpa/inet.h>	/* for printing an internet address in a user-friendly way */
 #include <pthread.h>
 #include <memory.h>
+#include <math.h>
 #define DEBUG 1
 #define BACKLOG 5
 #define MTU (sysconf(_SC_PAGE_SIZE))
@@ -26,10 +27,13 @@ struct tcp_client_context_t {
     char server_host[16];
     int server_port;
     int to_server_fd;
+    int if_throttle;
+    float max_bps;
     void * server_addr;
     void * to_server_addr;
     void * in_buf;
     void * out_buf;
+    
 };
 
 struct tcp_server_context_t {
@@ -64,6 +68,7 @@ struct scheduler_to_client{
     char section_id[16];
     char status[16];
     char job_id[16];
+    char max_bps[32];
 };
 
 void build_socket_context(void *acc_context);
@@ -79,6 +84,6 @@ int tcp_local_fpga_open(void * server_param);
 unsigned long tcp_local_fpga_do_job(void * server_context, unsigned int len);
 void tcp_local_fpga_close(void * server_context);
 void server_report_to_scheduler(void * server_context);
-size_t send_msg(int fd, void *buffer, size_t len, size_t chunk);
-size_t recv_msg(int fd, void *buffer, size_t len, size_t chunk);
+size_t send_msg(int fd, void *buffer, size_t len, size_t chunk, double max_bps);
+size_t recv_msg(int fd, void *buffer, size_t len, size_t chunk, double max_bps);
 #endif

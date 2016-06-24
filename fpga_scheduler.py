@@ -25,7 +25,7 @@ mutex = thread.allocate_lock()
 debug = 0
 BUFFER_SIZE = 1024
 recv_fmt = "!16s16s16s16s16s16s"
-send_fmt = "!16s16s16s16s16s"
+send_fmt = "!16s16s16s16s16s32s"
 RDMA_FLAG = 0
 TCP_FLAG = 1
 
@@ -54,8 +54,7 @@ class MyRequestHandler(BRH):
         status = data[0].strip('\x00')
 
         if status == "open":
-            ret = scheduler.handle_open_request(self.client_address, data)
-            schedule_ret = (ret, "open")
+            schedule_ret = scheduler.handle_open_request(self.client_address, data)
             response = self.on_send_response(schedule_ret)
             self.request.sendall(response)
 
@@ -68,11 +67,11 @@ class MyRequestHandler(BRH):
     def on_send_response(self, ret):
         if debug:
             print "return data:"
-            for i in ret[0]:
+            for i in ret:
                 print type(i)
 
-        send_data = struct.pack(send_fmt, str(ret[0][0]), str(ret[0][1]), str(ret[0][2]), str(ret[0][3]),
-                                    str(ret[0][4]))
+        send_data = struct.pack(send_fmt, str(ret[0]), str(ret[1]), str(ret[2]), str(ret[3]),
+                                    str(ret[4]), str(ret[5]))
         return send_data
 
 
@@ -123,6 +122,7 @@ class FpgaJob(object):
         self.job_out_buf_size = job_out_buf_size
         self.job_acc_name = job_acc_name
         self.job_arrival_time = job_arrival_time
+        self.max_bps = -1
         self.job_open_time = 0
         self.job_execution_time = 0
         self.job_start_time = 0
@@ -142,12 +142,10 @@ class FpgaJob(object):
 
 
 class FpgaScheduler(object):
-    def __init__(self, port, algorithm, mode, E, k):
+    def __init__(self, port, algorithm, mode, if_throttle_socket):
         self.current_job_count = 0
         self.recv_size = 16 * 6
-        self.recv_fmt = "!16s16s16s16s16s16s"
         self.send_size = 16 * 5
-        self.send_fmt = "!16s16s16s16s16s"
         self.backlog = 10
         self.recv_from_server_size = 1024
         self.port = port
@@ -161,8 +159,13 @@ class FpgaScheduler(object):
         self.epoch_time = time.time()
         self.job_arrival_time = 0
         self.priority_queue=defaultdict(list)
-        self.E =E
-        self.k = k
+        self.E =2
+        self.k = 6
+
+        self.throttle_bottleneck = False
+        if int(if_throttle_socket) == 1:
+            self.throttle_bottleneck = True
+
         #print "Mode = %r" %self.mode
 
     def initiate_acc_type_list(self):
@@ -224,11 +227,6 @@ class FpgaScheduler(object):
         else:
             self.conduct_fifo_scheduling(job_id, event_type)
 
-            #if self.scheduling_algorithm == "FIFO" or "SJF":
-            #        self.conduct_fifo_scheduling(job_id, event_type)
-
-            #elif self.scheduling_algorithm == "Queue":
-            #        self.conduct_queue_scheduling(job_id, event_type)
 
     def conduct_local_scheduling(self, job_id, event_type):
         if event_type == "JOB_ARRIVAL":
@@ -423,6 +421,12 @@ class FpgaScheduler(object):
         self.job_list[job_id].job_server_ip = section.node_ip
         self.job_list[job_id].job_fpga_port = section.port_id
         self.job_list[job_id].job_current_section_id = section.section_id
+
+        ######-----need to be improved-----#####
+        if self.throttle_bottleneck == True:
+            self.job_list[job_id].max_bps = 2**20;
+        ######-----need to be improved-----#####
+
         self.job_list[job_id].job_if_triggered = 1
 
         self.section_list[section_id].if_idle = False
@@ -522,6 +526,7 @@ class FpgaScheduler(object):
 
         self.execute_scheduling(current_job_id, job_node_ip, "JOB_ARRIVAL")
         if self.job_list[current_job_id].job_if_triggered == 0:
+            #print "needs waitting....."
             self.add_job_to_wait_queue(current_job_id)
 
         while (self.job_list[current_job_id].job_if_triggered == 0):
@@ -585,6 +590,7 @@ class FpgaScheduler(object):
         fpga_section_id = self.job_list[current_job_id].job_fpga_port
         fpga_node_port = self.node_list[fpga_node_ip].node_port
         fpga_status = self.job_list[current_job_id].job_status
+        max_bps = str(self.job_list[current_job_id].max_bps)
 
         if fpga_status == "3":
             #print "open a LOCAL acc."
@@ -593,7 +599,7 @@ class FpgaScheduler(object):
             section_id = fpga_section_id
             status = "3"
             job_id = current_job_id
-            ret = (host, port, section_id, status, job_id)
+            ret = (host, port, section_id, status, job_id, max_bps)
         elif fpga_status == "0" or fpga_status == "2":
             #print "open a REMOTE acc"
             server_host = fpga_node_ip
@@ -602,6 +608,7 @@ class FpgaScheduler(object):
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.connect((server_host, server_port))
             s_data = dict()
+
             s_data["job_id"] = str(current_job_id)
             s_data["status"] = fpga_status
             s_data["section_id"] = fpga_section_id
@@ -609,6 +616,8 @@ class FpgaScheduler(object):
             s_data["in_buf_size"] = str(self.job_list[current_job_id].job_in_buf_size)
             s_data["out_buf_size"] = str(self.job_list[current_job_id].job_out_buf_size)
             s_data["acc_name"] = self.job_list[current_job_id].job_acc_name
+            s_data["max_bps"] = max_bps
+
             s_data = json.dumps(s_data)
             s.send(s_data)
             response = s.recv(self.recv_from_server_size)
@@ -625,16 +634,16 @@ class FpgaScheduler(object):
             section_id = fpga_section_id
             status = response["ifuse"]
             job_id = current_job_id
-            ret = (host, port, section_id, status, job_id)
+            ret = (host, port, section_id, status, job_id, max_bps)
         else:
             print "Unknown status:%r" %fpga_status
 
         return ret
 
 
-def run_scheduler(port, algorithm, mode, input_file, E, k):
+def run_scheduler(port, algorithm, mode, input_file, if_throttle_socket):
     global scheduler
-    scheduler = FpgaScheduler(port, algorithm, mode, E, k)
+    scheduler = FpgaScheduler(port, algorithm, mode, if_throttle_socket)
     scheduler.initiate_system_status(input_file)
     host = ''
     address = (host, port)
@@ -647,20 +656,18 @@ def run_scheduler(port, algorithm, mode, input_file, E, k):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print "Usage: ", sys.argv[0], "<port> <Network Mode> <fpga_node_file>"
-        print "Example: ./scheduler 9000 Local fpga_node.txt"
-        print "Example: ./scheduler 9000 TCP fpga_node.txt"
-        print "Example: ./scheduler 9000 RDMA fpga_node.txt"
+    if len(sys.argv) != 5:
+        print "Usage: ", sys.argv[0], "<port> <Network Mode> <fpga_node_file> <if_throttle_socket>"
+        print "Example: ./scheduler 9000 Local fpga_node.txt 1"
+        print "Example: ./scheduler 9000 TCP fpga_node.txt -1"
+        print "Example: ./scheduler 9000 RDMA fpga_node.txt 1"
     else:
         algorithm="FIFO"
         mode = sys.argv[2]
-        print mode
         if mode not in ["Local", "TCP", "RDMA", "Hybrid"]:
             print "Wrong mode. Mode should be Local, TCP, RDMA or Hybrid"
             exit(0)
 
         input_file = sys.argv[3]
-        E = 2
-        K = 6
-        run_scheduler(int(sys.argv[1]), algorithm, mode, input_file, E, K)
+        if_throttle_socket = sys.argv[4]
+        run_scheduler(int(sys.argv[1]), algorithm, mode, input_file, if_throttle_socket)

@@ -1,8 +1,7 @@
 #include "acc_servicelayer.h"
 #include "tcp_transfer.h"
 
-
-size_t send_msg(int fd, void *buffer, size_t len, size_t chunk)
+size_t send_msg(int fd, void *buffer, size_t len, size_t chunk, double max_bps)
 {
     char *c_ptr = (char *) buffer;
     size_t block = chunk, left_block = len, sent_block = 0;
@@ -13,7 +12,28 @@ size_t send_msg(int fd, void *buffer, size_t len, size_t chunk)
     }
 
     while(sent_block < len) {
+
+	    struct timeval t1, t2, dt;
+        unsigned long send_sec;
+        double ideal_sec;
+
+        gettimeofday(&t1, NULL);
         block = send(fd, c_ptr, chunk, 0);
+        gettimeofday(&t2, NULL);
+
+        timersub(&t2,&t1,&dt);
+        send_sec = dt.tv_usec + 1000000* dt.tv_sec;
+
+        if (max_bps > 0){
+            ideal_sec = ceil(1000000 * chunk / max_bps);  
+            // chunk: in Bytes; max_bps: in Byte/sec
+            if (ideal_sec > send_sec) {
+                double sleep_interval = ideal_sec - send_sec;
+                unsigned long interval = sleep_interval; 
+                usleep(interval);
+            }
+        } 
+        
         if (block < 0){
             printf("Fail to send");
             printf("sent block =%d\n", block);
@@ -32,7 +52,7 @@ size_t send_msg(int fd, void *buffer, size_t len, size_t chunk)
     return sent_block; 
 }
     
-size_t recv_msg(int fd, void *buffer, size_t len, size_t chunk)
+size_t recv_msg(int fd, void *buffer, size_t len, size_t chunk, double max_bps)
 {
     char *c_ptr = buffer;
     size_t block = chunk, left_block = len, recv_block = 0;
@@ -45,7 +65,27 @@ size_t recv_msg(int fd, void *buffer, size_t len, size_t chunk)
 
     while (recv_block < len) {
         //printf("recv.....\n");
+	    struct timeval t1, t2, dt;
+        unsigned long recv_sec;
+        double ideal_sec;
+
+        gettimeofday(&t1, NULL);
         block = recv(fd, c_ptr, chunk, 0);
+        gettimeofday(&t2, NULL);
+
+        timersub(&t2,&t1,&dt);
+        recv_sec = dt.tv_usec + 1000000* dt.tv_sec;
+
+        if (max_bps > 0){
+            ideal_sec = ceil(1000000 * chunk / max_bps);  
+            // chunk: in Bytes; max_bps: in Byte/sec
+            if (ideal_sec > recv_sec) {
+                double sleep_interval = ideal_sec - recv_sec;
+                unsigned long interval = sleep_interval; 
+                usleep(interval);
+            }
+        } 
+
         if (block == 0){
             //printf("nothing to recv\n");
             break;
@@ -136,18 +176,34 @@ unsigned int remote_tcp_do_job(void *acc_ctx, const char *param, unsigned int jo
 	struct timeval t1, t2, dt;
     unsigned long send_sec, recv_sec;
     struct acc_context_t *acc_context = (struct acc_context_t *) acc_ctx;
+    struct scheduler_context_t * scheduler_ctx = acc_context->scheduler_context;
     struct tcp_client_context_t *tcp_ctx = (struct tcp_client_context_t *)acc_context->tcp_context;
+
+    double max_bps = scheduler_ctx->max_bps;
+    double send_bps, recv_bps;
     unsigned int recv_buf_size;
     *result_buf = tcp_ctx->out_buf;
     char *in_buf = (char *)tcp_ctx->in_buf;
     int fd = tcp_ctx->to_server_fd;
+
     gettimeofday(&t1, NULL);
-    size_t len = send_msg(fd, in_buf, job_len, MTU); 
-    recv_buf_size = recv_msg(fd, *result_buf, job_len, MTU);
+    //printf("Line %d\n", __LINE__);
+    size_t len = send_msg(fd, in_buf, job_len, MTU, max_bps); 
+    //printf("Line %d\n", __LINE__);
     gettimeofday(&t2, NULL);
     timersub(&t2,&t1,&dt);
-    recv_sec = (dt.tv_usec + 1000000* dt.tv_sec)/1000;
-    //printf("Round Time %ld\n",recv_sec );
+    send_sec = dt.tv_usec + 1000000* dt.tv_sec;
+    send_bps = 1000000*job_len/send_sec/1024/1024;
+     
+    gettimeofday(&t1, NULL);
+    recv_buf_size = recv_msg(fd, *result_buf, job_len, MTU, max_bps);
+    gettimeofday(&t2, NULL);
+    timersub(&t2,&t1,&dt);
+    recv_sec = dt.tv_usec + 1000000* dt.tv_sec;
+    send_bps = 1000000*job_len/recv_sec/1024/1024;
+
+    printf("SEND: %f MB/s\n", send_bps);
+    printf("RECV: %f MB/s\n", recv_bps);
 
     return recv_buf_size; 
 } 
@@ -215,6 +271,7 @@ void * tcp_server_data_transfer(void * server_param) {
     server_context.in_buf_size = my_param->in_buf_size;
     server_context.out_buf_size = my_param->out_buf_size;
     unsigned int real_buf_size = my_param->real_in_buf_size;
+    double max_bps = my_param->max_bps;
     //printf("my_param->in_buf_size=%u, out_buf_size=%u\n",my_param->in_buf_size, my_param->out_buf_size);
 
 
@@ -279,7 +336,7 @@ void * tcp_server_data_transfer(void * server_param) {
     char *recv_buff = (char *)memset(malloc(recv_len),0, recv_len); //buffer
 
     while (1) {
-        if( (recv_size = recv_msg(rqst_fd, recv_buff, recv_len, MTU)) < 0){
+        if( (recv_size = recv_msg(rqst_fd, recv_buff, recv_len, MTU, max_bps)) < 0){
             printf("fail to receive\n");
             exit(1);
         }
@@ -296,7 +353,7 @@ void * tcp_server_data_transfer(void * server_param) {
         //printf("ret = %lu\n", ret);
         memcpy(send_buff, server_context.out_buf, ret);
         
-        if ( (send_size = send_msg(rqst_fd, send_buff, ret, MTU))< 0){
+        if ( (send_size = send_msg(rqst_fd, send_buff, ret, MTU, max_bps))< 0){
             printf("fail to send\n");
             exit(1);
         }

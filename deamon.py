@@ -42,12 +42,16 @@ class MyRequestHandler(BRH):
             in_buf_size = scheduler_context["in_buf_size"]
             out_buf_size = scheduler_context["out_buf_size"]
             acc_name = scheduler_context["acc_name"]
+            max_bps = scheduler_context["max_bps"]
+
             #for i,j in scheduler_context.items():
             #    print i,j
+
             ret_context = acc_monitor.start_service(job_id, status, section_id,
                                                     real_in_buf_size, in_buf_size,
                                                     out_buf_size, acc_name,
-                                                    str(scheduler_host), str(scheduler_port))
+                                                    str(scheduler_host), str(scheduler_port),
+                                                    max_bps)
             #for i,j in ret_context.items():
             #    print i,j
             send_data = json.dumps(ret_context)

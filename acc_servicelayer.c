@@ -102,7 +102,6 @@ unsigned long fpga_acc_do_job (struct acc_context_t * acc_context, const char * 
     
     scheduler_ctx->execution_time += usec;
     //printf("open, exe: %ld, %ld\n", socket_ctx->open_time, socket_ctx->execution_time);
-
     return result_buf_size;
 }
  
@@ -250,7 +249,10 @@ int request_to_scheduler(void *acc_ctx) {
     strcpy(scheduler_ctx->job_id, recv_ctx.job_id);
     strcpy(scheduler_ctx->section_id, recv_ctx.section_id);
     strcpy(scheduler_ctx->status, recv_ctx.status);
+
+    scheduler_ctx->max_bps = atof(recv_ctx.max_bps);
     scheduler_ctx->server_port = atoi(recv_ctx.port);
+
     status = atoi(recv_ctx.status);
     close(fd);
    /* if (DEBUG){
